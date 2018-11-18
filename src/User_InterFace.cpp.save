@@ -1,0 +1,288 @@
+/**
+    this is the main class that connect between all other system class
+    Bank Application System Class
+**/
+
+#include "User_InterFace.h"
+
+User_InterFace::User_InterFace()
+{
+    /// ctor
+    this->Login();
+}
+
+void User_InterFace::Login()
+{
+    /// function check for the PassWord to execute System
+    string password_input = "";
+    while ( !key )
+    {
+        cout << "Enter Password to login :  ";
+        cin  >> password_input;
+
+        if ( password_input == this->password )
+        {
+            key = true;
+            system("CLS");
+        }
+        else
+        {
+            cout << "Invalid Password\n" << endl;
+            system("Pause");
+            system("CLS");
+        }
+    }
+    /// if pass is correct -> execute()
+    this->System_Execution();
+}
+
+void User_InterFace::System_Execution()
+{
+    /// the main  function of the class 
+    /// Run the System and print Menu
+    
+    cout << "\n\tWelcome in FCI Banking Management System\n" << endl;
+    string choice = "";
+    while ( key )
+    {
+        /// print Menu
+        print_Menu(); 
+        cin  >> choice;
+        
+        if      ( choice == "0" ){ key = false; break; }    /// if zeros Halt else Choose :-
+                        
+        if      ( choice == "1" ){ create_Account(); }     
+        else if ( choice == "2" ){ list_Accounts();  }
+        else if ( choice == "3" ){ withDraw();       }
+        else if ( choice == "4" ){ deposit();        }
+        else
+        {
+            cout << "Invalid Input" << endl;
+        }
+        system( "Pause" );
+        system( "CLS" );
+    }
+    system( "CLS" );
+    cout << "Good Bye\n\n";
+}
+
+void User_InterFace::print_Menu()
+{
+    /// The Menu Function
+    
+    cout << "1- Create New Account" << endl
+         << "2- List Clients and Accounts" << endl
+         << "3- WithDraw Money" << endl
+         << "4- Deposit  Money" << endl
+         << "0- End" << endl;
+    cout << "\nEnter Your Choice :  ";
+}
+
+int User_InterFace::search_Client( Bank_Client object )
+{
+    /// function to Search on clients vector about specific Client  O(N)
+    int index = -1;
+    for ( int i = 0; i < (int)this->clients_objects.size(); i++ )
+    {
+        if ( object == clients_objects[i] )
+            return i;
+    }
+    return index; /// return it's index
+}
+
+void User_InterFace::create_Account()
+{
+    string name , add , phone , type;
+    cout << "Enter The Name of The Client :  ";
+    cin.ignore();
+    getline( cin , name );
+    
+    
+    /// check for valid words
+    if ( !isValid_Letter( name ) )
+    {
+        cout << "\t\nInvalid Input\n\n";
+        return;
+    }
+
+    cout << "Enter the Address of the Client : ";
+    getline( cin , add );
+
+    cout << "Enter the Phone number of the client : ";
+    getline( cin , phone );
+    
+    /// check for valid numbers
+    if ( !isValid_Number( phone ) )
+    {
+        cout << "\t\nInvalid Input\n\n";
+        return;
+    }
+    
+    /// choosing right type of account
+    while ( true )
+    {
+        cout << endl << "1- Banking Account "
+             << endl << "2- Saving Banking Account "
+             << endl << "\nEnter The Type :  ";
+
+        cin  >> type;
+        if ( type == "1" || type == "2" )
+        {
+            break;
+        }
+        else
+        {
+            cout << "Invalid Type\n\n";
+            system( "Pasue" );
+            system( "CLS" );
+        }
+    }
+
+    Bank_Client custom_client( name , add , phone );
+    int index = search_Client( custom_client );
+
+    Account_Types* account; 
+    
+    /// create account
+    if ( type == "1" )
+    {
+        account = new Bank_Account;
+        account->setType( "Basic Bank Account" );
+    }
+    else
+    {
+        account = new Saving_Bank_Account;
+        account->setType( "Saving Bank Account" );
+    }
+
+    account->create_Account();
+    this->Access_Accounts.push_back( account );
+    
+    /// if this client is new client
+    if ( index == -1 )
+    {
+        custom_client.add_Account( account );
+        this->clients_objects.push_back( custom_client );
+    }
+    else /// if he excess before
+    {
+        this->clients_objects[ index ].add_Account( account );
+    }
+
+}
+
+void User_InterFace::list_Accounts()
+{
+    /// function to print all accounts with it's client info 
+    int loop = clients_objects.size();
+
+    for ( int i = 0; i < loop; i++ )
+    {
+        (this->clients_objects[i]).print_Client_Info();
+        (this->clients_objects[i]).print_Accounts();
+    }
+    if ( loop )
+        cout << "---------------------------------\n" << endl;
+    else
+        cout << "No Accounts Founded\n\n";
+}
+
+
+void User_InterFace::withDraw()
+{
+    /// function to withdraw money 
+    long long int id = 0; string strID;
+    cout << "Enter Id of the Account :  ";
+    cin  >> strID;
+    
+    /// check for valid number
+    if ( strID.length() <= 18 )
+        id = atoll( strID.c_str() ) , id--;
+    
+    if ( id < (int)Access_Accounts.size() && id >= 0 )
+    {
+        /// withdraw process
+        cout << "---------------------------------\n";
+        this->Access_Accounts[ id ]->print_Account_Details();
+        cout << endl;
+        this->Access_Accounts[ id ]->withDraw();
+        cout << endl;
+        this->Access_Accounts[ id ]->print_Account_Details();
+        cout << "---------------------------------\n";
+        return;
+    }
+    else if ( id > (int)Access_Accounts.size() )
+    {
+        /// Error huge ID
+        cout << "Account Not Found" << endl;
+        return;
+    }
+    else
+    {
+        cout << "Invalid Input" << endl;
+        return;
+    }
+}
+
+void User_InterFace::deposit()
+{
+    /// function to deposit money 
+    long long int id = 0; string strID;
+    cout << "Enter Id of the Account :  ";
+    cin  >> strID;
+    
+    /// check for valid number
+    if ( strID.length() <= 18 )
+        id = atoll( strID.c_str() ) , id--;
+
+    if ( id < (int)Access_Accounts.size() && id >= 0 )
+    {
+        /// withdraw process
+        cout << "---------------------------------\n";
+        this->Access_Accounts[ id ]->print_Account_Details();
+        cout << endl;
+        this->Access_Accounts[ id ]->Deposit();
+        cout << endl;
+        this->Access_Accounts[ id ]->print_Account_Details();
+        cout << "---------------------------------\n";
+    }
+    else if ( id > (int)Access_Accounts.size() )
+    {
+        cout << "Account Not Found" << endl;
+    }
+    else
+    {
+        cout << "Invalid Input" << endl;
+    }
+}
+
+bool operator== ( Bank_Client object1 , Bank_Client object2 )
+{
+    /// operator to check objects 
+    bool flag = true;
+    if ( object1.getName()          != object2.getName()         ) flag = false;
+    if ( object1.getAddress()       != object2.getAddress()      ) flag = false;
+    if ( object1.getPhoneNumber()   != object2.getPhoneNumber()  ) flag = false;
+    return flag;
+}
+
+bool User_InterFace::isValid_Number( string number )
+{
+    for ( int i = 0; i < (int)number.length(); i++ )
+    {
+        if ( !isdigit( number[i] ) )
+            return false;
+    }
+    return true;
+}
+bool User_InterFace::isValid_Letter( string word   )
+{
+    for ( int i = 0; i < (int)word.length(); i++ )
+    {
+        if ( isdigit( word[i] ) )
+            return false;
+    }
+    return true;
+}
+
+
